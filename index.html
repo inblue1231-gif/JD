@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>같은 자리, 달라진 만족</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 인트로: 무대에서 객석을 본 사진. 줌과 전환은 script.js의 renderIntro가 스크롤에 맞춰 움직인다 -->
+  <div id="intro">
+    <div id="intro-zoom"><img id="intro-photo" src="assets/venue.jpg" alt=""></div>
+    <p id="intro-title"></p>
+  </div>
+
+  <!-- 화면은 고정. 아래 #scroll-space가 스크롤 길이만 만든다 -->
+  <main id="stage">
+    <div id="bg"></div>
+    <div id="dim"></div>
+    <!-- 내 손 (1인칭, 화면에 고정). 든 물건은 script.js가 #hand-item에 넣는다 -->
+    <div class="hand down" id="hand">
+      <div class="hand-inner">
+        <svg viewBox="0 0 200 300" aria-hidden="true">
+          <path d="M72 300 L80 180 Q100 170 120 180 L128 300 Z"/>
+          <rect x="60" y="100" width="80" height="90" rx="28"/>
+        </svg>
+        <div id="hand-item"></div>
+        <svg class="hand-thumb" viewBox="0 0 200 300" aria-hidden="true">
+          <rect x="70" y="74" width="30" height="72" rx="15" transform="rotate(16 85 110)"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="bar-shade"></div>
+
+    <!-- 왼쪽 위: SEE · PLAY -->
+    <section class="scores">
+      <div class="score" id="score-see" style="--c: var(--see)">
+        <span class="score-label">See</span>
+        <span class="stars"></span>
+        <span class="score-dash">—</span>
+      </div>
+      <div class="score" id="score-play" style="--c: var(--play)">
+        <span class="score-label">Play</span>
+        <span class="stars"></span>
+        <span class="score-dash">—</span>
+      </div>
+    </section>
+
+    <!-- 오른쪽 위: 날짜 · 장소 -->
+    <section class="where">
+      <div class="where-date"><span class="where-label">Date.</span><span class="where-value" id="meta-date"></span></div>
+      <div class="where-loc"><span class="where-label">Location</span><span class="where-value" id="meta-venue"></span></div>
+    </section>
+
+    <!-- 현재곡 알약 -->
+    <div class="song" id="song">
+      <span class="song-icon"></span>
+      <span id="song-title"></span>
+      <span id="song-artist"></span>
+    </div>
+
+    <!-- 구간 제목: 가운데 크게 → 오른쪽 위(곡 알약 아래)로 -->
+    <div class="seg-title" id="seg-title">
+      <div class="seg-title-time" id="seg-title-time"></div>
+      <div class="seg-title-name" id="seg-title-name"></div>
+    </div>
+
+    <!-- 왼쪽 아래: 만족도 -->
+    <section class="sat" id="sat">
+      <div class="rings" id="rings"></div>
+      <svg class="heart" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
+      <span class="sat-num" id="sat-num"></span>
+    </section>
+
+    <!-- 맨 아래: 진행 바 (실제 시간 비율) -->
+    <section class="bar" id="bar">
+      <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+      <div id="bar-ticks"></div>
+      <div class="bar-head" id="bar-head"></div>
+    </section>
+
+    <!-- 다음 단계에서 만들 것 -->
+    <div class="todo todo-drag">여기에 드래그로 둘러보기 예정</div>
+    <div class="todo todo-left">여기에 관객 실루엣 예정 <b id="todo-crowd-l"></b></div>
+    <div class="todo todo-right">여기에 관객 실루엣 예정 <b id="todo-crowd-r"></b></div>
+    <div class="todo todo-karaoke" id="todo-karaoke" hidden>여기에 노래방 화면 예정</div>
+  </main>
+
+  <!-- 흰 원 = 내 위치. 1인칭 화면 위에 겹쳐서, 원이 커지며 화면 전체가 된다 -->
+  <div id="intro-me"><span id="intro-me-label">ME · <span id="intro-seat"></span></span></div>
+
+  <div id="scroll-space"></div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

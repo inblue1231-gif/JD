@@ -1,0 +1,546 @@
+:root {
+  /* 색은 세 가지만: SEE 노랑, PLAY 초록, 만족도 빨강 */
+  --see: #ffe600;
+  --play: #00e68a;
+  --sat: #ff3b4e;
+
+  --panel: rgba(220, 220, 220, 0.8);
+  --ink: #111;
+  --hand: #dcdcdc;
+  --stick: #5bbcff; /* 응원봉 불빛 */
+  --dim: 0.35;
+}
+
+* { box-sizing: border-box; }
+
+/* 모든 크기를 rem으로 잡아서 화면 크기에 따라 함께 커지고 작아지게 */
+html { font-size: clamp(11px, 1.55vmin, 22px); }
+
+body {
+  margin: 0;
+  background: #000;
+  color: var(--ink);
+  font-family: "Inter", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+
+/* ---------- 고정 화면 ---------- */
+
+#stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+#bg {
+  position: absolute;
+  inset: 0;
+  background: url("assets/stage.jpg") center 42% / cover no-repeat;
+}
+
+#dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: var(--dim);
+  transition: opacity 0.6s;
+}
+
+.bar-shade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 13rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent);
+}
+
+/* ---------- 인트로 ---------- */
+
+#intro {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+/* 사진 위치·크기와 줌은 script.js가 계산해서 넣는다 */
+#intro-zoom {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+#intro-photo {
+  position: absolute;
+  max-width: none;
+}
+
+#intro-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 2.4rem;
+  margin: 0;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-shadow: 0 0 0.8rem rgba(0, 0, 0, 0.8);
+}
+
+/* 흰 원 = 내 위치. 색은 흰색만 쓴다 */
+#intro-me {
+  position: fixed;
+  border: 3px solid rgba(255, 255, 255, var(--ring, 1));
+  border-radius: 50%;
+  background: rgba(255, 255, 255, var(--fill, 1));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+#intro-me-label {
+  position: absolute;
+  right: calc(100% + 0.9rem); /* 오른쪽은 멤버의 흰 옷이라 글자가 묻힌다 */
+  top: 50%;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 0 0 0.6rem rgba(0, 0, 0, 0.9);
+  transform: translateY(-50%);
+}
+
+/* 인트로 동안 HUD와 손은 숨긴다. --hud는 인트로 끝에서 0 → 1 */
+#stage.intro-on { pointer-events: none; }
+#stage.intro-on > :not(#bg):not(#dim) { opacity: var(--hud, 0); }
+
+/* ---------- 내 손 ---------- */
+
+/* 화면 아래 가운데에서 올라오는 팔. 아랫부분은 진행 바 뒤로 들어간다 */
+.hand {
+  position: absolute;
+  left: 82%;
+  bottom: -9rem;
+  width: 23rem;
+  aspect-ratio: 200 / 300;
+  transform: translateX(-50%);
+  transition: transform 0.4s ease-in-out;
+  pointer-events: none;
+}
+
+/* 구간이 바뀔 때, 그리고 hand가 null일 때 = 화면 아래로 내려간 상태 */
+.hand.down { transform: translate(-50%, 110%); }
+
+/* 겹치는 순서: 응원봉(0) < 팔·주먹(1) < 뱃지(2) < 엄지(3) */
+.hand-inner {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  isolation: isolate;
+  /* 스크롤할 때 script.js가 --swing, --bounce를 바꿔서 응원봉을 흔든다 */
+  transform: translateY(var(--bounce, 0rem)) rotate(var(--swing, 0deg));
+  transition: transform 0.2s ease-out;
+}
+
+.hand svg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  fill: var(--hand);
+}
+
+/* 엄지는 물건 앞에 겹친다 */
+.hand .hand-thumb {
+  z-index: 3;
+  stroke: rgba(0, 0, 0, 0.2);
+  stroke-width: 2;
+}
+
+/* 손에 든 물건. 팔과 같은 좌표(200 x 300)를 쓴다 */
+#hand-item {
+  position: absolute;
+  inset: 0;
+}
+
+/* 응원봉: 주먹 뒤에서 위로 솟는다 */
+.hand .hand-stick {
+  z-index: 0;
+  overflow: visible;
+}
+
+.stick-body { fill: var(--hand); }
+.stick-light { fill: var(--stick); }
+
+.hand-badge {
+  position: absolute;
+  z-index: 2;
+  left: 27%;
+  top: 5.3%;
+  display: block;
+  width: 46%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 0 0 0.3rem var(--ink);
+}
+
+img.hand-badge { box-shadow: none; }
+
+/* 나눔: 5초에 한 번, 왼쪽·오른쪽을 번갈아 옆으로 살짝 내민다 */
+.hand.offering .hand-inner { animation: offer 10s ease-in-out infinite; }
+
+@keyframes offer {
+  0%, 10% { transform: none; }
+  18%, 30% { transform: translateX(-4rem) rotate(-16deg); }
+  40%, 60% { transform: none; }
+  68%, 80% { transform: translateX(4rem) rotate(16deg); }
+  90%, 100% { transform: none; }
+}
+
+/* ---------- 왼쪽 위: SEE · PLAY ---------- */
+
+.scores {
+  position: absolute;
+  top: 2.2rem;
+  left: 2.6rem;
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1.6rem 0.7rem 1.3rem;
+  background: var(--panel);
+  border-radius: 99px;
+}
+
+.score-label {
+  position: relative;
+  z-index: 0;
+  min-width: 3.8rem;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.score-label::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -0.1rem;
+  bottom: -0.1rem;
+  width: 2.7rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.stars { display: flex; gap: 0.15rem; }
+
+.stars svg {
+  width: 2.1rem;
+  height: 2.1rem;
+  fill: var(--ink);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+.stars svg.on { fill: var(--c); }
+
+.score-dash {
+  display: none;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+/* null 점수: 별을 비우고 "—" */
+.score.is-null .stars svg { fill: none; opacity: 0.4; }
+.score.is-null .score-dash { display: inline; }
+
+/* ---------- 오른쪽 위: 날짜 · 장소 ---------- */
+
+.where {
+  position: absolute;
+  top: 1rem;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.where-date,
+.where-loc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--panel);
+}
+
+.where-date {
+  gap: 6rem;
+  padding: 0.7rem 1.4rem 0.5rem 3.4rem;
+  font-size: 1.6rem;
+  clip-path: polygon(2.4rem 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.where-loc {
+  gap: 12rem;
+  margin-top: -1px;
+  padding: 1.1rem 1.4rem 1.1rem 6.2rem;
+  font-size: 3rem;
+  clip-path: polygon(5rem 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.where-label { color: #777; font-weight: 700; }
+.where-value { color: #000; font-weight: 800; }
+
+/* ---------- 현재곡 알약 ---------- */
+
+.song {
+  position: absolute;
+  top: 14rem;
+  right: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  max-width: 60vw;
+  padding: 0.8rem 2rem 0.8rem 0.9rem;
+  background: var(--panel);
+  border-radius: 99px;
+}
+
+.song-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: #000;
+}
+
+.song-icon::before {
+  content: "";
+  width: 0.36rem;
+  height: 1.15rem;
+  background: #fff;
+  box-shadow: 0.7rem 0 0 #fff;
+  transform: translateX(-0.35rem);
+}
+
+#song-title {
+  overflow: hidden;
+  font-size: 1.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#song-artist {
+  flex: none;
+  font-size: 1.3rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* 곡이 아닌 상태(대기, VCR, MC 등): 재생 아이콘과 아티스트명 없이 */
+.song.no-song { padding-left: 2rem; }
+.song.no-song .song-icon,
+.song.no-song #song-artist { display: none; }
+
+/* ---------- 구간 제목 ---------- */
+
+/* 기본 = 작아져서 오른쪽 위(곡 알약 아래)에 머무는 상태 */
+.seg-title {
+  position: absolute;
+  left: calc(100% - 2.6rem);
+  top: 24.5rem;
+  transform: translate(-100%, -100%) scale(0.36);
+  transform-origin: 100% 100%;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: left 0.9s, top 0.9s, transform 0.9s, color 0.9s;
+  transition-timing-function: cubic-bezier(0.6, 0, 0.2, 1);
+}
+
+/* 구간이 바뀐 직후 = 가운데 크게 */
+.seg-title.big {
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%) scale(1);
+  color: rgba(255, 255, 255, 0.6);
+  animation: title-in 0.45s ease-out;
+}
+
+.seg-title.snap { transition: none; }
+
+.seg-title-time { font-size: min(2.8vw, 5rem); margin-bottom: 0.1em; }
+.seg-title-name { font-size: min(7.5vw, 13rem); letter-spacing: -0.02em; }
+
+@keyframes title-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------- 왼쪽 아래: 만족도 ---------- */
+
+/* 하트의 중심점. 동심원 개수 = 만족도. 원 사이 간격은 밖으로 갈수록 넓어진다 */
+.sat {
+  position: absolute;
+  left: 12.6rem;
+  bottom: 18.6rem;
+  width: 0;
+  height: 0;
+}
+
+.ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(6rem + var(--i) * 1.4rem + var(--i) * var(--i) * 0.6rem);
+  height: calc(6rem + var(--i) * 1.4rem + var(--i) * var(--i) * 0.6rem);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+.ring.on { transform: translate(-50%, -50%) scale(1); }
+
+.heart {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4.2rem;
+  height: 4.2rem;
+  fill: var(--sat);
+  transform: translate(-50%, -50%);
+  transition: fill 0.4s;
+}
+
+.sat-num {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #fff;
+  font-size: 1.85rem;
+  font-weight: 800;
+  transform: translate(-50%, -56%);
+}
+
+.sat.is-null .heart { fill: #666; }
+
+/* ---------- 맨 아래: 진행 바 ---------- */
+
+.bar {
+  position: absolute;
+  left: 2.6rem;
+  right: 2.6rem;
+  bottom: 1.4rem;
+  height: 5.2rem;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+
+.bar.dragging { cursor: grabbing; }
+
+.bar-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 1.8rem;
+  height: 0.5rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 99px;
+}
+
+.bar-fill {
+  width: 0;
+  height: 100%;
+  background: #fff;
+}
+
+.bar-tick {
+  position: absolute;
+  top: 1.4rem;
+  width: 2px;
+  height: 1.3rem;
+  margin-left: -1px;
+  background: #fff;
+}
+
+.bar-tick span {
+  position: absolute;
+  top: 1.5rem;
+  left: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+/* 눈금이 가까운 구간(19:15 · 19:26)이 겹치지 않게 한 줄씩 엇갈림 */
+.bar-tick.row2 { height: 2.5rem; }
+.bar-tick.row2 span { top: 2.7rem; }
+.bar-tick.first span { transform: none; }
+.bar-tick.last span { transform: translateX(-100%); }
+
+.bar-head {
+  position: absolute;
+  top: -0.9rem;
+  padding: 0.25rem 0.8rem;
+  background: #fff;
+  border-radius: 99px;
+  color: #000;
+  font-size: 1.1rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.bar-head::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 2.35rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-left: -0.6rem;
+  background: #fff;
+  border-radius: 50%;
+}
+
+/* ---------- 다음 단계 자리 표시 ---------- */
+
+.todo {
+  position: absolute;
+  padding: 0.4rem 0.8rem;
+  border: 1px dashed rgba(255, 255, 255, 0.55);
+  border-radius: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.todo b { font-weight: 600; opacity: 0.75; }
+
+.todo-drag { left: 40%; top: 1.4rem; transform: translateX(-50%); }
+.todo-left { left: 2.6rem; top: 17rem; }
+.todo-right { right: 1.4rem; top: 27rem; }
+.todo-karaoke { left: 50%; top: 30%; transform: translateX(-50%); }
